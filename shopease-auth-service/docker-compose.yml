@@ -1,0 +1,33 @@
+﻿services:
+  auth-db:
+    image: mysql:8.0
+    container_name: shopease-auth-mysql
+    restart: unless-stopped
+    environment:
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD}
+      MYSQL_DATABASE: ${MYSQL_DATABASE}
+      MYSQL_USER: ${MYSQL_USER}
+      MYSQL_PASSWORD: ${MYSQL_PASSWORD}
+    volumes:
+      - auth_mysql_data:/var/lib/mysql
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-uroot", "-p${MYSQL_ROOT_PASSWORD}"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+      start_period: 20s
+
+  auth-service:
+    build: .
+    container_name: shopease-auth-service
+    restart: unless-stopped
+    env_file:
+      - .env
+    ports:
+      - "8002:8002"
+    depends_on:
+      auth-db:
+        condition: service_healthy
+
+volumes:
+  auth_mysql_data:
